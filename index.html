@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مدیریت آشپزخانه</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7f5; --card:#fff; --primary:#2e7d5b; --primary-dark:#256b4d;
+    --primary-light:#e6f2ec; --text:#1f2a26; --muted:#7b8a84;
+    --border:#e3e9e6; --danger:#d9534f; --warn:#e8a33d; --ok:#3fa46a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:16px 14px 60px;font-family:'Vazirmatn',Tahoma,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.8}
+  .app{max-width:900px;margin:0 auto}
+  header{text-align:center;margin-bottom:18px}
+  header h1{font-size:1.6rem;margin:0 0 4px;color:var(--primary)}
+  header .sub{color:var(--muted);font-size:.88rem;margin:0}
+  .tabs{display:flex;gap:8px;background:#fff;padding:6px;border-radius:14px;
+    border:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+  .tab-btn{flex:1;white-space:nowrap;border:none;background:transparent;
+    padding:10px 14px;border-radius:10px;font-family:inherit;font-size:.92rem;
+    font-weight:600;color:var(--muted);cursor:pointer;transition:.18s}
+  .tab-btn.active{background:var(--primary);color:#fff}
+  .badge{background:var(--primary-light);color:var(--primary);border-radius:999px;
+    padding:0 7px;font-size:.72rem}
+  .tab-btn.active .badge{background:rgba(255,255,255,.25);color:#fff}
+  .badge:empty{display:none}
+  .panel{display:none}
+  .panel.active{display:block}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:16px;margin-bottom:14px}
+  .card h2{font-size:.98rem;margin:0 0 12px;color:var(--primary)}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
+  input,select{width:100%;padding:10px 12px;border:1px solid var(--border);
+    border-radius:10px;background:#fbfdfc;color:inherit;font-family:inherit;
+    font-size:.9rem}
+  input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff}
+  .hint{font-size:.76rem;color:var(--muted);margin-top:8px}
+  .btn{border:none;border-radius:10px;background:var(--primary);color:#fff;
+    padding:11px 18px;font-family:inherit;font-size:.9rem;font-weight:700;
+    cursor:pointer;transition:.18s}
+  .btn:hover{background:var(--primary-dark)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn-ghost{background:var(--primary-light);color:var(--primary)}
+  .btn-icon{border:none;background:var(--primary-light);color:var(--primary);
+    border-radius:9px;width:34px;height:34px;font-size:1rem;font-weight:700;
+    cursor:pointer;display:grid;place-items:center}
+  .btn-icon.danger{background:#fdeceb;color:var(--danger)}
+  .toolbar{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:14px}
+  @media(max-width:620px){.toolbar{grid-template-columns:1fr 1fr}
+    .toolbar input{grid-column:1/-1}}
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    background:#fbfdfc;border:1px solid var(--border);border-right:4px solid var(--border);
+    border-radius:12px;padding:11px 13px}
+  .item-main{flex:1;min-width:150px}
+  .item-name{font-weight:700;font-size:.96rem}
+  .item-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:.78rem;
+    color:var(--muted);margin-top:3px;align-items:center}
+  .item-actions{display:flex;gap:6px}
+  .tag{background:var(--primary-light);color:var(--primary);border-radius:6px;
+    padding:1px 8px;font-weight:600;font-size:.76rem}
+  .exp{font-weight:600}
+  .item.expired{border-right-color:var(--danger);background:#fef7f7}
+  .item.urgent{border-right-color:var(--warn);background:#fffbf4}
+  .item.soon{border-right-color:#d4c34a}
+  .item.fresh{border-right-color:var(--ok)}
+  .item.none{border-right-color:#c9d6d1}
+  .item.expired .exp{color:var(--danger)}
+  .item.urgent .exp{color:#b8720e}
+  .check{display:flex;align-items:center;gap:9px;flex:1;min-width:140px;cursor:pointer}
+  .check input{width:19px;height:19px;accent-color:var(--primary);cursor:pointer}
+  .item.done{opacity:.5}
+  .item.done .item-name{text-decoration:line-through}
+  .qty{font-size:.84rem;color:var(--muted);white-space:nowrap}
+  .empty{text-align:center;color:var(--muted);padding:24px 10px;font-size:.88rem}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));
+    gap:10px;margin-bottom:14px}
+  .stat{background:#fff;border:1px solid var(--border);border-radius:14px;
+    padding:12px 8px;text-align:center}
+  .stat .num{font-size:1.45rem;font-weight:700;color:var(--primary);display:block}
+  .stat .lbl{font-size:.75rem;color:var(--muted)}
+  .stat.danger .num{color:var(--danger)}
+  .stat.warn .num{color:var(--warn)}
+  .backup{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+  #toast{position:fixed;bottom:22px;right:50%;transform:translate(50%,20px);
+    background:#1f2a26;color:#fff;padding:10px 22px;border-radius:999px;
+    font-size:.86rem;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+  #toast.show{opacity:1;transform:translate(50%,0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🍳 مدیریت آشپزخانه</h1>
+    <p class="sub">انبار مواد غذایی، تاریخ انقضا و لیست خرید</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="inventory">📦 انبار</button>
+    <button class="tab-btn" data-tab="shopping">🛒 لیست خرید</button>
+    <button class="tab-btn" data-tab="alerts">🔔 هشدارها <span class="badge" id="alertBadge"></span></button>
+  </nav>
+
+  <section class="panel active" id="panel-inventory">
+    <div class="card">
+      <h2>افزودن ماده غذایی</h2>
+      <form id="itemForm" class="form-grid">
+        <input id="itemName" type="text" placeholder="نام (مثلاً شیر)" required>
+        <input id="itemQty" type="number" min="0" step="any" value="1" required>
+        <select id="itemUnit"></select>
+        <select id="itemCategory"></select>
+        <input id="itemExpiry" type="date">
+        <button class="btn" type="submit">افزودن</button>
+      </form>
+    </div>
+    <div class="card">
+      <div class="toolbar">
+        <input id="searchInput" type="text" placeholder="🔍 جستجو...">
+        <select id="catFilter"></select>
+        <select id="sortSelect">
+          <option value="expiry">نزدیک‌ترین انقضا</option>
+          <option value="name">نام</option>
+          <option value="added">تازه‌ترین</option>
+        </select>
+      </div>
+      <div id="invList" class="list"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-shopping">
+    <div class="card">
+      <h2>افزودن به لیست خرید</h2>
+      <form id="shopForm" class="form-grid">
+        <input id="shopName" type="text" placeholder="نام" required>
+        <input id="shopQty" type="number" min="0" step="any" value="1" required>
+        <select id="shopUnit"></select>
+        <select id="shopCategory"></select>
+        <button class="btn" type="submit">افزودن</button>
+      </form>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <span id="shopSummary" style="font-size:.84rem;color:var(--muted)"></span>
+        <button class="btn btn-ghost" id="moveBtn" disabled>📦 انتقال به انبار</button>
+      </div>
+      <div id="shopList" class="list"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-alerts">
+    <div class="stats" id="stats"></div>
+    <div class="card">
+      <h2>❌ منقضی‌شده</h2>
+      <div id="expiredList" class="list"></div>
+    </div>
+    <div class="card">
+      <h2>⏳ نزدیک انقضا</h2>
+      <div id="soonList" class="list"></div>
+    </div>
+    <div class="card">
+      <h2>💾 پشتیبان‌گیری</h2>
+      <div class="backup">
+        <button class="btn btn-ghost" id="exportBtn">⬇️ خروجی</button>
+        <label class="btn btn-ghost" for="importInput">⬆️ بازگردانی</label>
+        <input id="importInput" type="file" accept=".json" hidden>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const KEY='kitchen_manager_v1';
+const UNITS=['عدد','کیلوگرم','گرم','لیتر','میلی‌لیتر','بسته','قوطی','شیشه'];
+const CATS=['لبنیات','پروتئین','سبزیجات','میوه','نان و غلات','کنسرو و خشکبار','ادویه و چاشنی','نوشیدنی','منجمد','سایر'];
+const state={items:[],shopping:[]};
+const $=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const fa=n=>Number(n).toLocaleString('fa-IR');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function load(){
+  try{const r=localStorage.getItem(KEY);
+    if(r){const d=JSON.parse(r);
+      state.items=Array.isArray(d.items)?d.items:[];
+      state.shopping=Array.isArray(d.shopping)?d.shopping:[];}
+  }catch(e){}
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+
+function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+function daysLeft(s){if(!s)return null;const t=new Date();t.setHours(0,0,0,0);
+  const d=parseDate(s);d.setHours(0,0,0,0);return Math.round((d-t)/86400000)}
+function faDate(s){return s?parseDate(s).toLocaleDateString('fa-IR'):'—'}
+function statusOf(d){if(d===null)return'none';if(d<0)return'expired';
+  if(d<=3)return'urgent';if(d<=7)return'soon';return'fresh'}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),2200)}
+
+function initSelects(){
+  const u=UNITS.map(x=>`<option>${x}</option>`).join('');
+  $('itemUnit').innerHTML=u;$('shopUnit').innerHTML=u;
+  const c=CATS.map(x=>`<option>${x}</option>`).join('');
+  $('itemCategory').innerHTML=c;$('shopCategory').innerHTML=c;
+  $('catFilter').innerHTML='<option value="">همه دسته‌ها</option>'+c;
+}
+
+function renderInv(){
+  const q=$('searchInput').value.trim().toLowerCase();
+  const cat=$('catFilter').value;
+  const sort=$('sortSelect').value;
+  let arr=state.items.filter(it=>{
+    if(cat&&it.category!==cat)return false;
+    if(q&&!it.name.toLowerCase().includes(q))return false;return true;});
+  arr.sort((a,b)=>{
+    if(sort==='name')return a.name.localeCompare(b.name,'fa');
+    if(sort==='added')return(b.addedAt||0)-(a.addedAt||0);
+    const da=daysLeft(a.expiry),db=daysLeft(b.expiry);
+    if(da===null&&db===null)return(b.addedAt||0)-(a.addedAt||0);
+    if(da===null)return 1;if(db===null)return-1;return da-db;});
+  if(!arr.length){$('invList').innerHTML='<p class="empty">خالی است 🥕</p>';return}
+  $('invList').innerHTML=arr.map(it=>{
+    const d=daysLeft(it.expiry);const st=statusOf(d);
+    let e='';
+    if(d!==null){if(d<0)e=`منقضی (${fa(Math.abs(d))} روز پیش)`;
+      else if(d===0)e='امروز منقضی می‌شود!';else e=`${fa(d)} روز مانده`;}
+    return `<div class="item ${st}">
+      <div class="item-main">
+        <div class="item-name">${esc(it.name)}</div>
+        <div class="item-meta">
+          <span class="tag">${esc(it.category)}</span>
+          <span>${fa(it.qty)} ${esc(it.unit)}</span>
+          ${it.expiry?`<span class="exp">📅 ${faDate(it.expiry)} — ${e}</span>`:''}
+        </div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-icon" data-action="dec" data-id="${it.id}">−</button>
+        <button class="btn-icon" data-action="inc" data-id="${it.id}">+</button>
+        <button class="btn-icon danger" data-action="del" data-id="${it.id}">🗑</button>
+      </div></div>`;
+  }).join('');
+}
+
+function renderShop(){
+  if(!state.shopping.length){$('shopList').innerHTML='<p class="empty">خالی است 🛒</p>'}
+  else{$('shopList').innerHTML=state.shopping.map(it=>`
+    <div class="item ${it.done?'done':''}">
+      <label class="check">
+        <input type="checkbox" data-action="toggle" data-id="${it.id}" ${it.done?'checked':''}>
+        <span class="item-name">${esc(it.name)}</span>
+      </label>
+      <span class="qty">${fa(it.qty)} ${esc(it.unit)}</span>
+      <button class="btn-icon danger" data-action="del" data-id="${it.id}">🗑</button>
+    </div>`).join('')}
+  const p=state.shopping.filter(i=>!i.done).length;
+  const dn=state.shopping.filter(i=>i.done).length;
+  $('shopSummary').textContent=state.shopping.length?
+    `${fa(p)} باقی‌مانده • ${fa(dn)} خریداری‌شده`:'';
+  $('moveBtn').disabled=dn===0;
+}
+
+function renderAlerts(){
+  const exp=[],soon=[];
+  state.items.forEach(it=>{const d=daysLeft(it.expiry);if(d===null)return;
+    if(d<0)exp.push({it,d});else if(d<=7)soon.push({it,d})});
+  exp.sort((a,b)=>a.d-b.d);soon.sort((a,b)=>a.d-b.d);
+  $('alertBadge').textContent=(exp.length+soon.length)||'';
+  $('stats').innerHTML=`
+    <div class="stat"><span class="num">${fa(state.items.length)}</span><span class="lbl">در انبار</span></div>
+    <div class="stat danger"><span class="num">${fa(exp.length)}</span><span class="lbl">منقضی</span></div>
+    <div class="stat warn"><span class="num">${fa(soon.length)}</span><span class="lbl">نزدیک انقضا</span></div>
+    <div class="stat"><span class="num">${fa(state.shopping.filter(i=>!i.done).length)}</span><span class="lbl">لیست خرید</span></div>`;
+  const row=(it,d)=>{const t=d<0?`${fa(Math.abs(d))} روز پیش`:(d===0?'امروز':`${fa(d)} روز مانده`);
+    return `<div class="item ${statusOf(d)}"><div class="item-main">
+      <div class="item-name">${esc(it.name)}</div>
+      <div class="item-meta"><span class="tag">${esc(it.category)}</span>
+      <span>${fa(it.qty)} ${esc(it.unit)}</span>
+      <span class="exp">📅 ${faDate(it.expiry)} — ${t}</span></div></div>
+      <button class="btn-icon danger" data-action="del" data-id="${it.id}">🗑</button></div>`};
+  $('expiredList').innerHTML=exp.length?exp.map(x=>row(x.it,x.d)).join(''):'<p class="empty">چیزی نیست 👌</p>';
+  $('soonList').innerHTML=soon.length?soon.map(x=>row(x.it,x.d)).join(''):'<p class="empty">چیزی نیست ✅</p>';
+}
+
+function renderAll(){renderInv();renderShop();renderAlerts()}
+
+function delItem(id){
+  const it=state.items.find(x=>x.id===id);if(!it)return;
+  if(!confirm(`«${it.name}» حذف شود؟`))return;
+  state.items=state.items.filter(x=>x.id!==id);save();renderAll();
+}
+
+function bind(){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    b.classList.add('active');$('panel-'+b.dataset.tab).classList.add('active')}));
+
+  $('itemForm').addEventListener('submit',e=>{
+    e.preventDefault();const name=$('itemName').value.trim();if(!name)return;
+    state.items.push({id:uid(),name,qty:Number($('itemQty').value)||0,
+      unit:$('itemUnit').value,category:$('itemCategory').value,
+      expiry:$('itemExpiry').value||'',addedAt:Date.now()});
+    save();renderAll();e.target.reset();$('itemName').focus();toast('اضافه شد ✅')});
+
+  $('invList').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-action]');if(!b)return;
+    const{action,id}=b.dataset;const it=state.items.find(x=>x.id===id);if(!it)return;
+    if(action==='inc')it.qty=+(it.qty+1).toFixed(2);
+    if(action==='dec')it.qty=Math.max(0,+(it.qty-1).toFixed(2));
+    if(action==='del'){delItem(id);return}
+    save();renderAll()});
+
+  $('searchInput').addEventListener('input',renderInv);
+  $('catFilter').addEventListener('change',renderInv);
+  $('sortSelect').addEventListener('change',renderInv);
+
+  $('shopForm').addEventListener('submit',e=>{
+    e.preventDefault();const name=$('shopName').value.trim();if(!name)return;
+    state.shopping.push({id:uid(),name,qty:Number($('shopQty').value)||0,
+      unit:$('shopUnit').value,category:$('shopCategory').value,done:false});
+    save();renderAll();e.target.reset();$('shopName').focus();toast('اضافه شد 🛒')});
+
+  $('shopList').addEventListener('change',e=>{
+    const cb=e.target.closest('input[data-action="toggle"]');if(!cb)return;
+    const it=state.shopping.find(x=>x.id===cb.dataset.id);if(!it)return;
+    it.done=cb.checked;save();renderShop();renderAlerts()});
+
+  $('shopList').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-action="del"]');if(!b)return;
+    state.shopping=state.shopping.filter(x=>x.id!==b.dataset.id);
+    save();renderAll()});
+
+  $('moveBtn').addEventListener('click',()=>{
+    const done=state.shopping.filter(i=>i.done);if(!done.length)return;
+    done.forEach(i=>state.items.push({id:uid(),name:i.name,qty:i.qty,unit:i.unit,
+      category:i.category||'سایر',expiry:'',addedAt:Date.now()}));
+    state.shopping=state.shopping.filter(i=>!i.done);
+    save();renderAll();toast(`${fa(done.length)} مورد منتقل شد 📦`)});
+
+  $('panel-alerts').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-action="del"]');if(!b)return;
+    delItem(b.dataset.id)});
+
+  $('exportBtn').addEventListener('click',()=>{
+    const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=`kitchen-${new Date().toISOString().slice(0,10)}.json`;a.click();
+    URL.revokeObjectURL(a.href);toast('پشتیبان ساخته شد 💾')});
+
+  $('importInput').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const d=JSON.parse(r.result);
+      if(!Array.isArray(d.items))throw new Error('فایل نامعتبر');
+      state.items=d.items;state.shopping=Array.isArray(d.shopping)?d.shopping:[];
+      save();renderAll();toast('بازگردانی شد ✅')}catch(err){alert('خطا: '+err.message)}};
+    r.readAsText(f);e.target.value=''});
+}
+
+initSelects();load();bind();renderAll();
+</script>
+</body>
+</html>
